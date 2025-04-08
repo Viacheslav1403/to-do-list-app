@@ -30,29 +30,33 @@ document.addEventListener("DOMContentLoaded", () => {
       listElement.classList.add("list");
       const progress = calculateProgress(list.tasks);
       listElement.innerHTML = `
-                <h2>${index + 1}. ${list.name} 
-                    <button class="delete-list-button" data-list-index="${index}">Delete List</button>
-                </h2>
-                <div class="progress-bar" style="width: ${progress}%;">${progress}%</div>
-                <input type="text" class="new-task-input" placeholder="New Task">
-                <button class="add-task-button" data-list-index="${index}">Add Task</button>
-                <ul>
-                    ${list.tasks
-                      .map(
-                        (task, taskIndex) => `
-                        <li>
-                            <span class="${
-                              task.done ? "done" : ""
-                            }" data-list-index="${index}" data-task-index="${taskIndex}">${String.fromCharCode(
-                          97 + taskIndex
-                        )}. ${task.name}</span>
-                            <button class="delete-task-button" data-list-index="${index}" data-task-index="${taskIndex}">Delete</button>
-                        </li>
-                    `
-                      )
-                      .join("")}
-                </ul>
-            `;
+              <h2>${index + 1}. <span class="list-title">${list.name}</span>
+                  <button class="edit-list-button" data-list-index="${index}">Edit</button>
+                  <button class="delete-list-button" data-list-index="${index}">Delete</button>
+              </h2>
+              <div class="progress-bar" style="width: ${progress}%;">${progress}%</div>
+              <input type="text" class="new-task-input" placeholder="New Task">
+              <button class="add-task-button" data-list-index="${index}">Add Task</button>
+              <ul>
+                  ${list.tasks
+                    .map(
+                      (task, taskIndex) => `
+                      <li>
+                          <span class="${
+                            task.done ? "done" : ""
+                          }" data-list-index="${index}" data-task-index="${taskIndex}">${String.fromCharCode(
+                        97 + taskIndex
+                      )}. <span class="task-title" data-list-index="${index}" data-task-index="${taskIndex}">${
+                        task.name
+                      }</span></span>
+                          <button class="edit-task-button" data-list-index="${index}" data-task-index="${taskIndex}">Edit</button>
+                          <button class="delete-task-button" data-list-index="${index}" data-task-index="${taskIndex}">Delete</button>
+                      </li>
+                  `
+                    )
+                    .join("")}
+              </ul>
+          `;
       listsContainer.appendChild(listElement);
     });
     updateOverallProgress();
@@ -83,6 +87,18 @@ document.addEventListener("DOMContentLoaded", () => {
     renderLists();
   }
 
+  function editListName(listIndex, newName) {
+    lists[listIndex].name = newName;
+    saveToLocalStorage();
+    renderLists();
+  }
+
+  function editTaskName(listIndex, taskIndex, newName) {
+    lists[listIndex].tasks[taskIndex].name = newName;
+    saveToLocalStorage();
+    renderLists();
+  }
+
   addListButton.addEventListener("click", () => {
     const listName = newListInput.value.trim();
     if (listName) {
@@ -109,7 +125,26 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (e.target.classList.contains("delete-list-button")) {
       const listIndex = e.target.getAttribute("data-list-index");
       deleteList(listIndex);
-    } else if (e.target.tagName === "SPAN") {
+    } else if (e.target.classList.contains("edit-list-button")) {
+      const listIndex = e.target.getAttribute("data-list-index");
+      const newName = prompt(
+        "Enter new name for the list",
+        lists[listIndex].name
+      );
+      if (newName) {
+        editListName(listIndex, newName);
+      }
+    } else if (e.target.classList.contains("edit-task-button")) {
+      const listIndex = e.target.getAttribute("data-list-index");
+      const taskIndex = e.target.getAttribute("data-task-index");
+      const newName = prompt(
+        "Enter new name for the task",
+        lists[listIndex].tasks[taskIndex].name
+      );
+      if (newName) {
+        editTaskName(listIndex, taskIndex, newName);
+      }
+    } else if (e.target.classList.contains("task-title")) {
       const listIndex = e.target.getAttribute("data-list-index");
       const taskIndex = e.target.getAttribute("data-task-index");
       toggleTaskDone(listIndex, taskIndex);
