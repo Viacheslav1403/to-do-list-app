@@ -1,0 +1,146 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  width: 600px;
+  margin: 50px auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+#overall-progress {
+  height: 20px;
+  background: #28a745;
+  color: #fff;
+  text-align: center;
+  line-height: 20px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+}
+
+.lists {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+#new-list-input {
+  width: 70%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+#add-list-button {
+  width: 25%;
+  padding: 10px;
+  background: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#add-list-button:hover {
+  background: #218838;
+}
+
+.list {
+  margin-bottom: 20px;
+}
+
+.list h2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 0 10px;
+}
+
+.new-task-input {
+  width: 70%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.add-task-button {
+  width: 25%;
+  padding: 10px;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.add-task-button:hover {
+  background: #0069d9;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #ccc;
+}
+
+li span {
+  flex-grow: 1;
+  cursor: pointer;
+}
+
+li span.done {
+  text-decoration: line-through;
+  color: #888;
+}
+
+.delete-task-button {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delete-task-button:hover {
+  background: #c82333;
+}
+
+.delete-list-button {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delete-list-button:hover {
+  background: #c82333;
+}
+
+.progress-bar {
+  height: 20px;
+  background: #28a745;
+  color: #fff;
+  text-align: center;
+  line-height: 20px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
