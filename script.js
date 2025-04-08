@@ -28,38 +28,55 @@ document.addEventListener("DOMContentLoaded", () => {
     lists.forEach((list, index) => {
       const listElement = document.createElement("div");
       listElement.classList.add("list");
+      listElement.setAttribute("draggable", true);
+      listElement.dataset.index = index;
+
       const progress = calculateProgress(list.tasks);
       listElement.innerHTML = `
-              <h2>${index + 1}. <span class="list-title">${list.name}</span>
-                  <button class="edit-list-button" data-list-index="${index}">Edit</button>
-                  <button class="delete-list-button" data-list-index="${index}">Delete</button>
-              </h2>
-              <div class="progress-bar" style="width: ${progress}%;">${progress}%</div>
-              <input type="text" class="new-task-input" placeholder="New Task">
-              <button class="add-task-button" data-list-index="${index}">Add Task</button>
-              <ul>
-                  ${list.tasks
-                    .map(
-                      (task, taskIndex) => `
-                      <li>
-                          <span class="${
-                            task.done ? "done" : ""
-                          }" data-list-index="${index}" data-task-index="${taskIndex}">${String.fromCharCode(
-                        97 + taskIndex
-                      )}. <span class="task-title" data-list-index="${index}" data-task-index="${taskIndex}">${
-                        task.name
-                      }</span></span>
-                          <button class="edit-task-button" data-list-index="${index}" data-task-index="${taskIndex}">Edit</button>
-                          <button class="delete-task-button" data-list-index="${index}" data-task-index="${taskIndex}">Delete</button>
-                      </li>
-                  `
-                    )
-                    .join("")}
-              </ul>
-          `;
+        <h2><span class="list-title">${list.name}</span>
+            <button class="edit-list-button" data-list-index="${index}">Edit</button>
+            <button class="delete-list-button" data-list-index="${index}">Delete</button>
+        </h2>
+        <div class="progress-bar" style="width: ${progress}%;">${progress}%</div>
+        <input type="text" class="new-task-input" placeholder="New Task">
+        <button class="add-task-button" data-list-index="${index}">Add Task</button>
+        <ol class="task-list">
+  ${list.tasks
+    .map(
+      (task, taskIndex) => `
+    <li>
+      <span class="${
+        task.done ? "done" : ""
+      }" data-list-index="${index}" data-task-index="${taskIndex}">
+        <span class="task-title" data-list-index="${index}" data-task-index="${taskIndex}">
+          ${task.name}
+        </span>
+      </span>
+      <button class="edit-task-button" data-list-index="${index}" data-task-index="${taskIndex}">Edit</button>
+      <button class="delete-task-button" data-list-index="${index}" data-task-index="${taskIndex}">Delete</button>
+    </li>
+  `
+    )
+    .join("")}
+</ol>
+      `;
       listsContainer.appendChild(listElement);
     });
+
     updateOverallProgress();
+
+    document.querySelectorAll(".new-task-input").forEach((input) => {
+      input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          const listIndex = input.nextElementSibling.dataset.listIndex;
+          const taskName = input.value.trim();
+          if (taskName) {
+            addTaskToList(listIndex, taskName);
+            input.value = "";
+          }
+        }
+      });
+    });
   }
 
   function addTaskToList(listIndex, taskName) {
@@ -109,6 +126,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  newListInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      addListButton.click();
+    }
+  });
+
   listsContainer.addEventListener("click", (e) => {
     if (e.target.classList.contains("add-task-button")) {
       const listIndex = e.target.getAttribute("data-list-index");
@@ -149,6 +172,44 @@ document.addEventListener("DOMContentLoaded", () => {
       const taskIndex = e.target.getAttribute("data-task-index");
       toggleTaskDone(listIndex, taskIndex);
     }
+  });
+
+  listsContainer.addEventListener("dragstart", (e) => {
+    if (e.target.classList.contains("list")) {
+      e.dataTransfer.setData("text/plain", e.target.dataset.index);
+      e.target.classList.add("dragging");
+    }
+  });
+
+  listsContainer.addEventListener("dragend", (e) => {
+    if (e.target.classList.contains("list")) {
+      e.target.classList.remove("dragging");
+    }
+  });
+
+  listsContainer.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    const draggingOver = e.target.closest(".list");
+    if (draggingOver) draggingOver.style.border = "2px dashed #888";
+  });
+
+  listsContainer.addEventListener("dragleave", (e) => {
+    const draggingOver = e.target.closest(".list");
+    if (draggingOver) draggingOver.style.border = "";
+  });
+
+  listsContainer.addEventListener("drop", (e) => {
+    e.preventDefault();
+    const fromIndex = +e.dataTransfer.getData("text/plain");
+    const toList = e.target.closest(".list");
+    if (!toList) return;
+    const toIndex = +toList.dataset.index;
+    if (fromIndex === toIndex) return;
+
+    const [movedList] = lists.splice(fromIndex, 1);
+    lists.splice(toIndex, 0, movedList);
+    saveToLocalStorage();
+    renderLists();
   });
 
   renderLists();

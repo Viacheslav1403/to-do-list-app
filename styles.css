@@ -1,3 +1,11 @@
+*,
+*::after,
+*::before {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
   font-family: Arial, sans-serif;
   background: #f4f4f4;
@@ -57,12 +65,31 @@ h1 {
 }
 
 .list {
+  position: relative;
+  padding-left: 25px;
   margin-bottom: 20px;
+  transition: transform 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease;
+}
+
+.task-list {
+  list-style-type: decimal;
+  padding-left: 20px;
+  color: black;
+}
+
+.list::before {
+  content: "•";
+  position: absolute;
+  left: 10px;
+  color: black;
+  font-size: 36px;
+  line-height: 1;
 }
 
 .list h2 {
   display: flex;
   justify-content: space-between;
+  gap: 10px;
   align-items: center;
   margin: 0 0 10px;
 }
@@ -89,8 +116,8 @@ h1 {
 }
 
 ul {
-  list-style: none;
-  padding: 0;
+  list-style: disc;
+  padding-left: 20px;
 }
 
 li {
@@ -118,7 +145,8 @@ li span.done {
   background: #007bff;
   color: #fff;
   border: none;
-  border-radius: 4px;
+  border-radius: 15px;
+  padding: 5px 10px;
   cursor: pointer;
   margin-left: 5px;
 }
@@ -155,3 +183,43 @@ li span.done {
   margin-bottom: 10px;
   border-radius: 4px;
 }
+
+.list.dragging {
+  opacity: 0.4;
+  transform: scale(1.03);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+}
+
+@media (max-width: 600px) {
+  .container {
+    width: 90%;
+    padding: 15px;
+  }
+
+  body {
+    font-size: 18px;
+  }
+
+  #new-list-input,
+  .new-task-input {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  #add-list-button,
+  .add-task-button {
+    width: 100%;
+  }
+
+  .lists {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 320px) {
+  body {
+    font-size: 20px;
+  }
+}
+
