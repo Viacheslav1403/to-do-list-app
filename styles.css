@@ -21,7 +21,10 @@
 }
 
 body {
-  background-color: var(--base-color);
+  background-image: url("img/fone.jpg");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
 }
 
 .container {
