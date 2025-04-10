@@ -6,20 +6,31 @@
   box-sizing: border-box;
 }
 
+:root {
+  scroll-behavior: smooth;
+  --base-color: rgb(244, 244, 244);
+  --color-accent: rgba(0, 0, 0, 0.102);
+  --color-overrall-progress: rgb(40, 167, 69);
+  --color-task-button: rgb(0, 123, 255);
+  --color-span-done: rgb(136, 136, 136);
+  --color-text-for-button: rgb(255, 255, 255);
+  --color-delete-button: rgb(220, 53, 69);
+  --color-border: rgb(204, 204, 204);
+
+  font-family: "Titillium Web", sans-serif;
+}
+
 body {
-  font-family: Arial, sans-serif;
-  background: #f4f4f4;
-  margin: 0;
-  padding: 0;
+  background-color: var(--base-color);
 }
 
 .container {
   width: 600px;
   margin: 50px auto;
-  background: #fff;
+  background-color: var(--base-color);
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 10px var(--color-accent);
 }
 
 h1 {
@@ -29,8 +40,8 @@ h1 {
 
 #overall-progress {
   height: 20px;
-  background: #28a745;
-  color: #fff;
+  background: var(--color-overrall-progress);
+  color: var(--base-color);
   text-align: center;
   line-height: 20px;
   margin-bottom: 20px;
@@ -46,22 +57,22 @@ h1 {
 #new-list-input {
   width: 70%;
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
 }
 
 #add-list-button {
   width: 25%;
   padding: 10px;
-  background: #28a745;
-  color: #fff;
+  background: var(--color-overrall-progress);
+  color: var(--base-color);
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 
 #add-list-button:hover {
-  background: #218838;
+  background: var(--color-overrall-progress);
 }
 
 .list {
@@ -71,52 +82,41 @@ h1 {
   transition: transform 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease;
 }
 
-.task-list {
-  list-style-type: decimal;
-  padding-left: 20px;
-  color: black;
-}
-
-.list::before {
-  content: "•";
-  position: absolute;
-  left: 10px;
-  color: black;
-  font-size: 36px;
-  line-height: 1;
-}
-
 .list h2 {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
   align-items: center;
   margin: 0 0 10px;
+}
+
+.list-buttons {
+  display: flex;
+  gap: 5px;
 }
 
 .new-task-input {
   width: 70%;
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
 }
 
 .add-task-button {
   width: 25%;
   padding: 10px;
-  background: #007bff;
-  color: #fff;
+  background: var(--color-task-button);
+  color: var(--base-color);
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 
 .add-task-button:hover {
-  background: #0069d9;
+  background: var(--color-task-button);
 }
 
-ul {
-  list-style: disc;
+ol.task-list {
+  list-style-type: decimal;
   padding-left: 20px;
 }
 
@@ -125,7 +125,7 @@ li {
   justify-content: space-between;
   align-items: center;
   padding: 10px 0;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid var(--color-border);
 }
 
 li span {
@@ -135,15 +135,16 @@ li span {
 
 li span.done {
   text-decoration: line-through;
-  color: #888;
+  color: var(--color-span-done);
 }
 
 .edit-task-button,
 .delete-task-button,
 .edit-list-button,
-.delete-list-button {
-  background: #007bff;
-  color: #fff;
+.delete-list-button,
+.done-task-button {
+  background: var(--color-task-button);
+  color: var(--color-text-for-button);
   border: none;
   border-radius: 15px;
   padding: 5px 10px;
@@ -154,30 +155,33 @@ li span.done {
 .edit-task-button:hover,
 .delete-task-button:hover,
 .edit-list-button:hover,
-.delete-list-button:hover {
-  background: #0056b3;
+.delete-list-button:hover,
+.done-task-button:hover {
+  background: var(--color-task-button);
 }
 
-.delete-task-button {
-  background: #dc3545;
-}
-
-.delete-task-button:hover {
-  background: #c82333;
-}
-
+.delete-task-button,
 .delete-list-button {
-  background: #dc3545;
+  background: var(--color-delete-button);
 }
 
+.delete-task-button:hover,
 .delete-list-button:hover {
-  background: #c82333;
+  background: var(--color-delete-button);
+}
+
+.done-task-button {
+  background: var(--color-overrall-progress);
+}
+
+.done-task-button:hover {
+  background: var(--color-overrall-progress);
 }
 
 .progress-bar {
   height: 20px;
-  background: #28a745;
-  color: #fff;
+  background: var(--color-overrall-progress);
+  color: var(--color-text-for-button);
   text-align: center;
   line-height: 20px;
   margin-bottom: 10px;
@@ -187,7 +191,7 @@ li span.done {
 .list.dragging {
   opacity: 0.4;
   transform: scale(1.03);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 15px var(--color-accent);
   z-index: 1000;
 }
 
@@ -222,4 +226,3 @@ li span.done {
     font-size: 20px;
   }
 }
-
