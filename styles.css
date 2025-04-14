@@ -8,16 +8,28 @@
 
 :root {
   scroll-behavior: smooth;
-  --base-color: rgb(244, 244, 244);
-  --color-accent: rgba(0, 0, 0, 0.102);
-  --color-overrall-progress: rgb(40, 167, 69);
-  --color-task-button: rgb(0, 123, 255);
-  --color-span-done: rgb(136, 136, 136);
-  --color-text-for-button: rgb(255, 255, 255);
-  --color-delete-button: rgb(220, 53, 69);
-  --color-border: rgb(204, 204, 204);
+  --base-color: rgb(248, 244, 242);
+  --color-accent: rgb(204, 188, 178);
+  --color-overrall-progress: rgb(184, 155, 132);
+  --color-task-button: rgb(161, 120, 94);
+  --color-span-done: rgb(153, 144, 133);
+  --color-text-for-button: rgb(110, 89, 76);
+  --color-delete-button: rgb(198, 91, 79);
+  --color-border: rgb(217, 207, 201);
+  --color-container: rgb(230, 221, 214);
+  font-family: "gf_Permanent_Marker variant0", Tofu;
+}
 
-  font-family: "Titillium Web", sans-serif;
+[data-theme="dark"] {
+  --base-color: rgb(31, 26, 23);
+  --color-accent: rgb(62, 53, 46);
+  --color-overrall-progress: rgb(107, 79, 60);
+  --color-task-button: rgb(141, 106, 85);
+  --color-span-done: rgb(165, 143, 130);
+  --color-text-for-button: rgb(248, 244, 242);
+  --color-delete-button: rgb(178, 86, 74);
+  --color-border: rgb(77, 64, 56);
+  --color-container: rgb(45, 36, 32);
 }
 
 body {
@@ -25,14 +37,15 @@ body {
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
+  color: var(--color-text-for-button);
 }
 
 .container {
   width: 600px;
   margin: 50px auto;
-  background-color: var(--base-color);
+  background-color: var(--color-container);
   padding: 20px;
-  border-radius: 8px;
+  border-radius: 38px;
   box-shadow: 0 0 10px var(--color-accent);
 }
 
@@ -49,6 +62,7 @@ h1 {
   line-height: 20px;
   margin-bottom: 20px;
   border-radius: 4px;
+  white-space: nowrap;
 }
 
 .lists {
@@ -147,12 +161,21 @@ li span.done {
 .delete-list-button,
 .done-task-button {
   background: var(--color-task-button);
-  color: var(--color-text-for-button);
+  color: var(--base-color);
   border: none;
   border-radius: 15px;
   padding: 5px 10px;
   cursor: pointer;
   margin-left: 5px;
+}
+
+.done-task-button::before {
+  content: "✔";
+}
+
+.edit-task-button::before,
+.edit-list-button::before {
+  content: "✎";
 }
 
 .edit-task-button:hover,
@@ -179,6 +202,14 @@ li span.done {
 
 .done-task-button:hover {
   background: var(--color-overrall-progress);
+}
+
+.theme-toggle-button {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  float: right;
 }
 
 .progress-bar {

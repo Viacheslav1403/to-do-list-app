@@ -3,71 +3,108 @@ const addListButton = document.getElementById("add-list-button");
 const listsContainer = document.getElementById("lists-container");
 const overallProgress = document.getElementById("overall-progress");
 
-let lists = JSON.parse(localStorage.getItem("lists")) || [];
+let draggedListIndex = null; // Збереження індексу перетягуваного списку
 
-function saveToLocalStorage() {
-  localStorage.setItem("lists", JSON.stringify(lists));
-}
+// Отримати списки з API сервера (симуляція виклику сервера за допомогою async/await)
+const fetchLists = async () => {
+  try {
+    const localData = localStorage.getItem("lists");
+    if (localData) {
+      return JSON.parse(localData); // Повернути збережені локально списки
+    }
 
-function calculateProgress(tasks) {
+    // Якщо в localStorage нічого немає — беремо з сервера
+    const response = await fetch("/api/lists");
+    if (!response.ok) throw new Error("Failed to fetch lists");
+    return await response.json();
+  } catch (error) {
+    console.error(error);
+    return []; // Повертаємо порожній масив у разі помилки
+  }
+};
+
+// Зберегти інформацію на сервер API (використовуючи async/await)
+const saveListsToServer = async (lists) => {
+  try {
+    localStorage.setItem("lists", JSON.stringify(lists));
+
+    const response = await fetch("/api/lists", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(lists),
+    });
+
+    if (!response.ok) throw new Error("Failed to save lists");
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+let lists = [];
+
+// Ініціалізація додатку через завантаження списків із сервера
+const initializeApp = async () => {
+  lists = await fetchLists();
+  renderLists();
+  updateOverallProgress();
+};
+
+// Обрахунок прогресу для завдань
+const calculateProgress = (tasks) => {
   if (tasks.length === 0) return 0;
-  const doneTasks = tasks.filter((task) => task.done).length;
+  const doneTasks = tasks.filter(({ done }) => done).length;
   return Math.round((doneTasks / tasks.length) * 100);
-}
+};
 
-function updateOverallProgress() {
-  const allTasks = lists.flatMap((list) => list.tasks);
+// Оновлення панелі загального прогресу
+const updateOverallProgress = () => {
+  const allTasks = lists.flatMap(({ tasks }) => tasks);
   const progress = calculateProgress(allTasks);
   overallProgress.style.width = `${progress}%`;
   overallProgress.innerText = `Overall Progress: ${progress}%`;
-}
+};
 
-function renderLists() {
+// Рендер всіх списків і завдань
+const renderLists = () => {
   listsContainer.innerHTML = "";
-  lists.forEach((list, index) => {
-    const listElement = document.createElement("div");
-    listElement.classList.add("list");
-    listElement.setAttribute("draggable", true);
-    listElement.dataset.index = index;
-
-    const progress = calculateProgress(list.tasks);
-    listElement.innerHTML = `
+  lists.forEach(({ name, tasks }, listIndex) => {
+    const progress = calculateProgress(tasks);
+    const listHTML = `
+      <div class="list" draggable="true" data-index="${listIndex}">
         <h2>
-          <span class="list-title">${list.name}</span>
+          <span class="list-title">${name}</span>
           <div class="list-buttons">
-            <button class="edit-list-button" data-list-index="${index}">Edit</button>
-            <button class="delete-list-button" data-list-index="${index}">-</button>
+            <button class="edit-list-button" data-list-index="${listIndex}"></button>
+            <button class="delete-list-button" data-list-index="${listIndex}">-</button>
           </div>
         </h2>
         <div class="progress-bar" style="width: ${progress}%;">${progress}%</div>
         <input type="text" class="new-task-input" placeholder="New Task">
-        <button class="add-task-button" data-list-index="${index}">Add Task</button>
+        <button class="add-task-button" data-list-index="${listIndex}">Add Task</button>
         <ol class="task-list">
-          ${list.tasks
+          ${tasks
             .map(
-              (task, taskIndex) => `
+              ({ name: taskName, done }, taskIndex) => `
             <li>
               <span class="${
-                task.done ? "done" : ""
-              }" data-list-index="${index}" data-task-index="${taskIndex}">
-                <span class="task-title" data-list-index="${index}" data-task-index="${taskIndex}">
-                  ${taskIndex + 1}. ${task.name}
-                </span>
+                done ? "done" : ""
+              }" data-list-index="${listIndex}" data-task-index="${taskIndex}">
+                <span class="task-title">${taskIndex + 1}. ${taskName}</span>
               </span>
-              <button class="done-task-button" data-list-index="${index}" data-task-index="${taskIndex}">Done</button>
-              <button class="edit-task-button" data-list-index="${index}" data-task-index="${taskIndex}">Edit</button>
-              <button class="delete-task-button" data-list-index="${index}" data-task-index="${taskIndex}">-</button>
+              <button class="done-task-button" data-list-index="${listIndex}" data-task-index="${taskIndex}"></button>
+              <button class="edit-task-button" data-list-index="${listIndex}" data-task-index="${taskIndex}"></button>
+              <button class="delete-task-button" data-list-index="${listIndex}" data-task-index="${taskIndex}">-</button>
             </li>
           `
             )
             .join("")}
         </ol>
-      `;
-    listsContainer.appendChild(listElement);
+      </div>
+    `;
+    listsContainer.innerHTML += listHTML;
   });
 
-  updateOverallProgress();
-
+  // Додавання списків і завдань за допомогою лівої кнопки мишки та клавіші "Enter"
   document.querySelectorAll(".new-task-input").forEach((input) => {
     input.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
@@ -80,140 +117,175 @@ function renderLists() {
       }
     });
   });
-}
 
-function addTaskToList(listIndex, taskName) {
+  // Динамічне переміщення списків
+  document.querySelectorAll(".list").forEach((listElem) => {
+    listElem.addEventListener("dragstart", (e) => {
+      draggedListIndex = Number(listElem.dataset.index);
+      e.dataTransfer.effectAllowed = "move";
+    });
+
+    listElem.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      listElem.style.border = "2px dashed #aaa";
+    });
+
+    listElem.addEventListener("dragleave", () => {
+      listElem.style.border = "";
+    });
+
+    listElem.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      listElem.style.border = "";
+
+      const targetIndex = Number(listElem.dataset.index);
+      if (draggedListIndex !== null && draggedListIndex !== targetIndex) {
+        const draggedList = lists.splice(draggedListIndex, 1)[0];
+        lists.splice(targetIndex, 0, draggedList);
+
+        await saveListsToServer(lists);
+        renderLists();
+        updateOverallProgress();
+      }
+    });
+  });
+};
+
+// Додати нове завдання до списку
+const addTaskToList = async (listIndex, taskName) => {
   lists[listIndex].tasks.push({ name: taskName, done: false });
-  saveToLocalStorage();
+  await saveListsToServer(lists);
   renderLists();
-}
+  updateOverallProgress();
+};
 
-function deleteTaskFromList(listIndex, taskIndex) {
+// Додати новий список
+const addList = async (listName) => {
+  lists.push({ name: listName, tasks: [] });
+  await saveListsToServer(lists);
+  renderLists();
+};
+
+// Видалити завдання зі списку
+const deleteTaskFromList = async (listIndex, taskIndex) => {
   lists[listIndex].tasks.splice(taskIndex, 1);
-  saveToLocalStorage();
+  await saveListsToServer(lists);
   renderLists();
-}
+  updateOverallProgress();
+};
 
-function deleteList(listIndex) {
+// Видалити список
+const deleteList = async (listIndex) => {
   lists.splice(listIndex, 1);
-  saveToLocalStorage();
+  await saveListsToServer(lists);
   renderLists();
-}
+  updateOverallProgress();
+};
 
-function toggleTaskDone(listIndex, taskIndex) {
-  lists[listIndex].tasks[taskIndex].done =
-    !lists[listIndex].tasks[taskIndex].done;
-  saveToLocalStorage();
+// Перемикання статусу виконаного завдання
+const toggleTaskDone = async (listIndex, taskIndex) => {
+  const task = lists[listIndex].tasks[taskIndex];
+  task.done = !task.done;
+  await saveListsToServer(lists);
   renderLists();
-}
+  updateOverallProgress();
+};
 
-function editListName(listIndex, newName) {
+// Редагувати список
+const editListName = async (listIndex, newName) => {
   lists[listIndex].name = newName;
-  saveToLocalStorage();
+  await saveListsToServer(lists);
   renderLists();
-}
+};
 
-function editTaskName(listIndex, taskIndex, newName) {
+// Редагувати завдання
+const editTaskName = async (listIndex, taskIndex, newName) => {
   lists[listIndex].tasks[taskIndex].name = newName;
-  saveToLocalStorage();
+  await saveListsToServer(lists);
   renderLists();
-}
+};
 
-addListButton.addEventListener("click", () => {
+// Додавання нового списку (лівою кнопкою мишки)
+addListButton.addEventListener("click", async () => {
   const listName = newListInput.value.trim();
   if (listName) {
-    lists.push({ name: listName, tasks: [] });
-    saveToLocalStorage();
-    renderLists();
+    await addList(listName);
     newListInput.value = "";
   }
 });
 
-newListInput.addEventListener("keypress", (e) => {
+// Додавання нового списку (клавішою "Enter")
+newListInput.addEventListener("keypress", async (e) => {
   if (e.key === "Enter") {
-    addListButton.click();
+    const listName = newListInput.value.trim();
+    if (listName) {
+      await addList(listName);
+      newListInput.value = "";
+    }
   }
 });
 
-listsContainer.addEventListener("click", (e) => {
-  if (e.target.classList.contains("add-task-button")) {
-    const listIndex = e.target.getAttribute("data-list-index");
+listsContainer.addEventListener("click", async (e) => {
+  const { classList, dataset } = e.target;
+
+  if (classList.contains("add-task-button")) {
+    const listIndex = Number(dataset.listIndex);
     const taskInput = e.target.previousElementSibling;
     const taskName = taskInput.value.trim();
     if (taskName) {
-      addTaskToList(listIndex, taskName);
+      await addTaskToList(listIndex, taskName);
       taskInput.value = "";
     }
-  } else if (e.target.classList.contains("delete-task-button")) {
-    const listIndex = e.target.getAttribute("data-list-index");
-    const taskIndex = e.target.getAttribute("data-task-index");
-    deleteTaskFromList(listIndex, taskIndex);
-  } else if (e.target.classList.contains("delete-list-button")) {
-    const listIndex = e.target.getAttribute("data-list-index");
-    deleteList(listIndex);
-  } else if (e.target.classList.contains("done-task-button")) {
-    const listIndex = e.target.getAttribute("data-list-index");
-    const taskIndex = e.target.getAttribute("data-task-index");
-    toggleTaskDone(listIndex, taskIndex);
-  } else if (e.target.classList.contains("edit-list-button")) {
-    const listIndex = e.target.getAttribute("data-list-index");
+  } else if (classList.contains("delete-task-button")) {
+    const listIndex = Number(dataset.listIndex);
+    const taskIndex = Number(dataset.taskIndex);
+    await deleteTaskFromList(listIndex, taskIndex);
+  } else if (classList.contains("delete-list-button")) {
+    const listIndex = Number(dataset.listIndex);
+    await deleteList(listIndex);
+  } else if (classList.contains("done-task-button")) {
+    const listIndex = Number(dataset.listIndex);
+    const taskIndex = Number(dataset.taskIndex);
+    await toggleTaskDone(listIndex, taskIndex);
+  } else if (classList.contains("edit-list-button")) {
+    const listIndex = Number(dataset.listIndex);
     const newName = prompt(
       "Enter new name for the list",
       lists[listIndex].name
     );
     if (newName) {
-      editListName(listIndex, newName);
+      await editListName(listIndex, newName);
     }
-  } else if (e.target.classList.contains("edit-task-button")) {
-    const listIndex = e.target.getAttribute("data-list-index");
-    const taskIndex = e.target.getAttribute("data-task-index");
+  } else if (classList.contains("edit-task-button")) {
+    const listIndex = Number(dataset.listIndex);
+    const taskIndex = Number(dataset.taskIndex);
     const newName = prompt(
       "Enter new name for the task",
       lists[listIndex].tasks[taskIndex].name
     );
     if (newName) {
-      editTaskName(listIndex, taskIndex, newName);
+      await editTaskName(listIndex, taskIndex, newName);
     }
   }
 });
 
-// Drag-and-drop functionality
-listsContainer.addEventListener("dragstart", (e) => {
-  if (e.target.classList.contains("list")) {
-    e.dataTransfer.setData("text/plain", e.target.dataset.index);
-    e.target.classList.add("dragging");
-  }
+// Перемикання світлої/темної теми
+const toggleButton = document.getElementById("theme-toggle");
+const html = document.documentElement;
+
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme) {
+  html.setAttribute("data-theme", savedTheme);
+  toggleButton.textContent = savedTheme === "dark" ? "🌞" : "🌙";
+}
+
+toggleButton.addEventListener("click", () => {
+  const current = html.getAttribute("data-theme");
+  const newTheme = current === "dark" ? "light" : "dark";
+  html.setAttribute("data-theme", newTheme);
+  localStorage.setItem("theme", newTheme);
+  toggleButton.textContent = newTheme === "dark" ? "🌞" : "🌙";
 });
 
-listsContainer.addEventListener("dragend", (e) => {
-  if (e.target.classList.contains("list")) {
-    e.target.classList.remove("dragging");
-  }
-});
-
-listsContainer.addEventListener("dragover", (e) => {
-  e.preventDefault();
-  const draggingOver = e.target.closest(".list");
-  if (draggingOver) draggingOver.style.border = "2px dashed #888";
-});
-
-listsContainer.addEventListener("dragleave", (e) => {
-  const draggingOver = e.target.closest(".list");
-  if (draggingOver) draggingOver.style.border = "";
-});
-
-listsContainer.addEventListener("drop", (e) => {
-  e.preventDefault();
-  const fromIndex = +e.dataTransfer.getData("text/plain");
-  const toList = e.target.closest(".list");
-  if (!toList) return;
-  const toIndex = +toList.dataset.index;
-  if (fromIndex === toIndex) return;
-
-  const [movedList] = lists.splice(fromIndex, 1);
-  lists.splice(toIndex, 0, movedList);
-  saveToLocalStorage();
-  renderLists();
-});
-
-renderLists();
+// Запуск додатка
+initializeApp();
