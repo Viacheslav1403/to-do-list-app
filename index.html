@@ -17,6 +17,47 @@
       </div>
       <div id="lists-container"></div>
     </div>
+    <!-- Шаблон списку -->
+    <template id="list-template">
+      <div class="list" draggable="true" data-index="">
+        <h2>
+          <span class="list-title"></span>
+          <div class="list-buttons">
+            <button class="edit-list-button" data-list-index=""></button>
+            <button class="delete-list-button" data-list-index="">-</button>
+          </div>
+        </h2>
+        <div class="progress-bar" style="width: 0%">0%</div>
+        <input type="text" class="new-task-input" placeholder="New Task" />
+        <button class="add-task-button" data-list-index="">Add Task</button>
+        <ol class="task-list"></ol>
+      </div>
+    </template>
+    <!-- Шаблон завдання -->
+    <template id="task-template">
+      <li>
+        <span class="" data-list-index="" data-task-index="">
+          <span class="task-title"></span>
+        </span>
+        <button
+          class="done-task-button"
+          data-list-index=""
+          data-task-index=""
+        ></button>
+        <button
+          class="edit-task-button"
+          data-list-index=""
+          data-task-index=""
+        ></button>
+        <button
+          class="delete-task-button"
+          data-list-index=""
+          data-task-index=""
+        >
+          -
+        </button>
+      </li>
+    </template>
     <script src="script.js"></script>
   </body>
 </html>

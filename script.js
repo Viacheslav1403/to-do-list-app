@@ -2,8 +2,13 @@ const newListInput = document.getElementById("new-list-input");
 const addListButton = document.getElementById("add-list-button");
 const listsContainer = document.getElementById("lists-container");
 const overallProgress = document.getElementById("overall-progress");
+const listTemplate = document.getElementById("list-template");
+const taskTemplate = document.getElementById("task-template");
+const toggleButton = document.getElementById("theme-toggle");
+const html = document.documentElement;
 
 let draggedListIndex = null; // Збереження індексу перетягуваного списку
+let lists = [];
 
 // Отримати списки з API сервера (симуляція виклику сервера за допомогою async/await)
 const fetchLists = async () => {
@@ -12,7 +17,6 @@ const fetchLists = async () => {
     if (localData) {
       return JSON.parse(localData); // Повернути збережені локально списки
     }
-
     // Якщо в localStorage нічого немає — беремо з сервера
     const response = await fetch("/api/lists");
     if (!response.ok) throw new Error("Failed to fetch lists");
@@ -40,8 +44,6 @@ const saveListsToServer = async (lists) => {
   }
 };
 
-let lists = [];
-
 // Ініціалізація додатку через завантаження списків із сервера
 const initializeApp = async () => {
   lists = await fetchLists();
@@ -68,54 +70,58 @@ const updateOverallProgress = () => {
 const renderLists = () => {
   listsContainer.innerHTML = "";
   lists.forEach(({ name, tasks }, listIndex) => {
-    const progress = calculateProgress(tasks);
-    const listHTML = `
-      <div class="list" draggable="true" data-index="${listIndex}">
-        <h2>
-          <span class="list-title">${name}</span>
-          <div class="list-buttons">
-            <button class="edit-list-button" data-list-index="${listIndex}"></button>
-            <button class="delete-list-button" data-list-index="${listIndex}">-</button>
-          </div>
-        </h2>
-        <div class="progress-bar" style="width: ${progress}%;">${progress}%</div>
-        <input type="text" class="new-task-input" placeholder="New Task">
-        <button class="add-task-button" data-list-index="${listIndex}">Add Task</button>
-        <ol class="task-list">
-          ${tasks
-            .map(
-              ({ name: taskName, done }, taskIndex) => `
-            <li>
-              <span class="${
-                done ? "done" : ""
-              }" data-list-index="${listIndex}" data-task-index="${taskIndex}">
-                <span class="task-title">${taskIndex + 1}. ${taskName}</span>
-              </span>
-              <button class="done-task-button" data-list-index="${listIndex}" data-task-index="${taskIndex}"></button>
-              <button class="edit-task-button" data-list-index="${listIndex}" data-task-index="${taskIndex}"></button>
-              <button class="delete-task-button" data-list-index="${listIndex}" data-task-index="${taskIndex}">-</button>
-            </li>
-          `
-            )
-            .join("")}
-        </ol>
-      </div>
-    `;
-    listsContainer.innerHTML += listHTML;
-  });
+    const listClone = listTemplate.content.cloneNode(true);
+    const listElem = listClone.querySelector(".list");
 
-  // Додавання списків і завдань за допомогою лівої кнопки мишки та клавіші "Enter"
-  document.querySelectorAll(".new-task-input").forEach((input) => {
-    input.addEventListener("keypress", (e) => {
+    listElem.dataset.index = listIndex;
+    listElem.querySelector(".list-title").textContent = name;
+
+    const progress = calculateProgress(tasks);
+    const progressBar = listElem.querySelector(".progress-bar");
+    progressBar.style.width = `${progress}%`;
+    progressBar.textContent = `${progress}%`;
+
+    const addTaskBtn = listElem.querySelector(".add-task-button");
+    const newTaskInput = listElem.querySelector(".new-task-input");
+    const taskList = listElem.querySelector(".task-list");
+
+    addTaskBtn.dataset.listIndex = listIndex;
+    newTaskInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
-        const listIndex = input.nextElementSibling.dataset.listIndex;
-        const taskName = input.value.trim();
+        const taskName = newTaskInput.value.trim();
         if (taskName) {
           addTaskToList(listIndex, taskName);
-          input.value = "";
+          newTaskInput.value = "";
         }
       }
     });
+
+    listElem.querySelector(".edit-list-button").dataset.listIndex = listIndex;
+    listElem.querySelector(".delete-list-button").dataset.listIndex = listIndex;
+
+    tasks.forEach(({ name: taskName, done }, taskIndex) => {
+      const taskClone = taskTemplate.content.cloneNode(true);
+      const li = taskClone.querySelector("li");
+
+      const span = li.querySelector("span");
+      span.className = done ? "done" : "";
+      span.dataset.listIndex = listIndex;
+      span.dataset.taskIndex = taskIndex;
+
+      li.querySelector(".task-title").textContent = `${
+        taskIndex + 1
+      }. ${taskName}`;
+
+      ["done", "edit", "delete"].forEach((action) => {
+        const btn = li.querySelector(`.${action}-task-button`);
+        btn.dataset.listIndex = listIndex;
+        btn.dataset.taskIndex = taskIndex;
+      });
+
+      taskList.appendChild(li);
+    });
+
+    listsContainer.appendChild(listElem);
   });
 
   // Динамічне переміщення списків
@@ -142,7 +148,6 @@ const renderLists = () => {
       if (draggedListIndex !== null && draggedListIndex !== targetIndex) {
         const draggedList = lists.splice(draggedListIndex, 1)[0];
         lists.splice(targetIndex, 0, draggedList);
-
         await saveListsToServer(lists);
         renderLists();
         updateOverallProgress();
@@ -237,42 +242,32 @@ listsContainer.addEventListener("click", async (e) => {
       taskInput.value = "";
     }
   } else if (classList.contains("delete-task-button")) {
-    const listIndex = Number(dataset.listIndex);
-    const taskIndex = Number(dataset.taskIndex);
-    await deleteTaskFromList(listIndex, taskIndex);
-  } else if (classList.contains("delete-list-button")) {
-    const listIndex = Number(dataset.listIndex);
-    await deleteList(listIndex);
-  } else if (classList.contains("done-task-button")) {
-    const listIndex = Number(dataset.listIndex);
-    const taskIndex = Number(dataset.taskIndex);
-    await toggleTaskDone(listIndex, taskIndex);
-  } else if (classList.contains("edit-list-button")) {
-    const listIndex = Number(dataset.listIndex);
-    const newName = prompt(
-      "Enter new name for the list",
-      lists[listIndex].name
+    await deleteTaskFromList(
+      Number(dataset.listIndex),
+      Number(dataset.taskIndex)
     );
+  } else if (classList.contains("delete-list-button")) {
+    await deleteList(Number(dataset.listIndex));
+  } else if (classList.contains("done-task-button")) {
+    await toggleTaskDone(Number(dataset.listIndex), Number(dataset.taskIndex));
+  } else if (classList.contains("edit-list-button")) {
+    const newName = prompt("Enter new name for the list");
     if (newName) {
-      await editListName(listIndex, newName);
+      await editListName(Number(dataset.listIndex), newName);
     }
   } else if (classList.contains("edit-task-button")) {
-    const listIndex = Number(dataset.listIndex);
-    const taskIndex = Number(dataset.taskIndex);
-    const newName = prompt(
-      "Enter new name for the task",
-      lists[listIndex].tasks[taskIndex].name
-    );
+    const newName = prompt("Enter new name for the task");
     if (newName) {
-      await editTaskName(listIndex, taskIndex, newName);
+      await editTaskName(
+        Number(dataset.listIndex),
+        Number(dataset.taskIndex),
+        newName
+      );
     }
   }
 });
 
 // Перемикання світлої/темної теми
-const toggleButton = document.getElementById("theme-toggle");
-const html = document.documentElement;
-
 const savedTheme = localStorage.getItem("theme");
 if (savedTheme) {
   html.setAttribute("data-theme", savedTheme);
