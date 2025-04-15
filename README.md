@@ -30,9 +30,9 @@
 
 ## 📁 Структура проєкту
 
-. ├── README.md</br>
-  ├── index.html</br>
-  ├── styles.css</br> 
-  ├── script.js</br> 
-  ├── img/</br> 
-       └── fone.jpg
+├── README.md</br>
+├── index.html</br>
+├── styles.css</br> 
+├── script.js</br> 
+├── img/</br> 
+      └── fone.jpg
