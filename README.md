@@ -34,5 +34,3 @@
 ├── index.html</br>
 ├── styles.css</br> 
 ├── script.js</br> 
-├── img/</br> 
-      └── fone.jpg
