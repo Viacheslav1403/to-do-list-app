@@ -33,10 +33,7 @@
 }
 
 body {
-  background-image: url("img/fone.jpg");
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
+  background-color: rgb(217, 198, 181);
   color: var(--color-text-for-button);
 }
 
