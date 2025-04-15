@@ -29,9 +29,10 @@
 ---
 
 ## 📁 Структура проєкту
-├── README.md
-├── index.html 
-├── styles.css 
-├── script.js 
-├── img/ 
-     └── fone.jpg
+
+. ├── README.md
+  ├── index.html 
+  ├── styles.css 
+  ├── script.js 
+  ├── img/ 
+       └── fone.jpg
